@@ -18,7 +18,7 @@ export class Queue {
         this.concurrent = concurrent;
     }
 
-    public async execute<T>(func: () => Promise<T>, key?: string | number, colorStreamType?: ColorStreamType): Promise<T> {
+    public async execute<T>(func: () => Promise<T>, key?: string | number, _colorStreamType?: ColorStreamType): Promise<T> {
         const job: Job = {key, colorStreamType: _colorStreamType, cancelled: false, running: false};
         this.jobs.push(job);
 
