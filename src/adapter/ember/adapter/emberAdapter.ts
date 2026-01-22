@@ -1936,6 +1936,11 @@ export class EmberAdapter extends Adapter {
         const command = zclFrame.command;
         let commandResponseId: number | undefined;
 
+        logger.debug(
+            `sendZclFrameToEndpoint ${ieeeAddr}:${networkAddress}/${endpoint} ` +
+                `(${this.queue.count()}), type=${zclFrame.colorStreamType}, timeout=${timeout}`, NS,
+        );
+
         if (command.response !== undefined && disableResponse === false) {
             commandResponseId = command.response;
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
@@ -1959,6 +1964,12 @@ export class EmberAdapter extends Adapter {
         }
 
         const data = zclFrame.toBuffer();
+
+        
+        if (zclFrame.colorStreamType)
+        {
+            logger.debug(`Cancelled frames: ${this.queue.cancelOldRequest(networkAddress, zclFrame.colorStreamType)}`, NS);
+        }
 
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
@@ -2036,7 +2047,7 @@ export class EmberAdapter extends Adapter {
 
                 return result;
             }
-        }, networkAddress);
+        }, networkAddress, zclFrame.colorStreamType);
     }
 
     // queued, non-InterPAN

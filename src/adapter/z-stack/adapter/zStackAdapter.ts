@@ -479,6 +479,11 @@ export class ZStackAdapter extends Adapter {
     ): Promise<Events.ZclPayload | undefined> {
         const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
 
+        if (zclFrame.colorStreamType)
+        {
+            logger.debug(`Cancelled frames: ${this.queue.cancelOldRequest(networkAddress, zclFrame.colorStreamType)}`, NS);
+        }       
+
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
@@ -497,7 +502,7 @@ export class ZStackAdapter extends Adapter {
                 false,
                 undefined,
             );
-        }, networkAddress);
+        }, networkAddress, zclFrame.colorStreamType);
     }
 
     private async sendZclFrameToEndpointInternal(
@@ -518,7 +523,7 @@ export class ZStackAdapter extends Adapter {
     ): Promise<Events.ZclPayload | undefined> {
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
-                `(${responseAttempt},${dataRequestAttempt},${this.queue.count()})`,
+                 `(${responseAttempt},${dataRequestAttempt},${this.queue.count()}), type=${zclFrame.colorStreamType}, timeout=${timeout}`,
             NS,
         );
         let response = null;

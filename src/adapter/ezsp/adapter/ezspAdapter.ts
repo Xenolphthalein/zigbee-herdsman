@@ -325,6 +325,10 @@ export class EZSPAdapter extends Adapter {
         sourceEndpoint?: number,
         profileId?: number,
     ): Promise<ZclPayload | undefined> {
+        if (zclFrame.colorStreamType)
+        {
+            logger.debug(`Cancelled frames: ${this.queue.cancelOldRequest(networkAddress, zclFrame.colorStreamType)}`, NS);
+        }
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(
@@ -340,7 +344,7 @@ export class EZSPAdapter extends Adapter {
                 0,
                 profileId,
             );
-        }, networkAddress);
+        }, networkAddress, zclFrame.colorStreamType);
     }
 
     private async sendZclFrameToEndpointInternal(
@@ -361,7 +365,7 @@ export class EZSPAdapter extends Adapter {
         }
         logger.debug(
             `sendZclFrameToEndpointInternal ${ieeeAddr}:${networkAddress}/${endpoint} ` +
-                `(${responseAttempt},${dataRequestAttempt},${this.queue.count()}), timeout=${timeout}`,
+                `(${responseAttempt},${dataRequestAttempt},${this.queue.count()}), type=${zclFrame.colorStreamType}, timeout=${timeout}`,
             NS,
         );
         let response = null;

@@ -975,6 +975,19 @@ export class Endpoint extends ZigbeeEntity {
             optionsWithDefaults.reservedBits,
         );
 
+        let testPayload = logPayload ? logPayload : payload;
+        if ((testPayload.hasOwnProperty('colorx') && testPayload.hasOwnProperty('colory') ) ||
+            (testPayload.hasOwnProperty('enhancehue') && testPayload.hasOwnProperty('saturation') ))
+        {
+            frame.colorStreamType = 'color';
+            optionsWithDefaults.timeout = 200;
+        }
+        else if (testPayload.hasOwnProperty('level'))
+        {
+            frame.colorStreamType = 'brightness';
+            optionsWithDefaults.timeout = 200;
+        }
+
         const createLogMessage = (): string =>
             `CommandResponse ${this.deviceIeeeAddress}/${this.ID} ` +
             `${cluster.name}.${command.name}(${JSON.stringify(payload)}, ${JSON.stringify(optionsWithDefaults)})`;

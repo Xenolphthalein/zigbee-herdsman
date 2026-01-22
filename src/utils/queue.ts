@@ -1,5 +1,10 @@
+import {resolve} from "path";
+import {ColorStreamType} from "../zspec/zcl/zclFrame";
+
 interface Job {
     key?: string | number;
+    colorStreamType?: ColorStreamType;
+    cancelled: boolean;
     running: boolean;
     start?: () => void;
 }
@@ -13,8 +18,8 @@ export class Queue {
         this.concurrent = concurrent;
     }
 
-    public async execute<T>(func: () => Promise<T>, key?: string | number): Promise<T> {
-        const job: Job = {key, running: false};
+    public async execute<T>(func: () => Promise<T>, key?: string | number, colorStreamType?: ColorStreamType): Promise<T> {
+        const job: Job = {key, colorStreamType: _colorStreamType, cancelled: false, running: false};
         this.jobs.push(job);
 
         // Minor optimization/workaround: various tests like the idea that a job that is immediately runnable is run without an event loop spin.
@@ -33,7 +38,11 @@ export class Queue {
         }
 
         try {
-            return await func();
+            if (job.cancelled === true){
+                throw Error('Job is cancelled');
+            } else {
+                return await func();
+            }
         } finally {
             this.jobs.splice(this.jobs.indexOf(job), 1);
             this.executeNext();
@@ -71,6 +80,27 @@ export class Queue {
     }
 
     public count(): number {
-        return this.jobs.length;
+        let total = 0;
+        this.jobs.forEach((element) => { if (!element.cancelled) total++});
+        return total;
+    }
+
+    public cancelOldRequest(        
+        key?: string | number,        
+        colorStreamType? : ColorStreamType,
+    ): number {
+        let cancelled = 0;
+
+        this.jobs.forEach((element) => {
+            if (!element.running &&
+                key && element.key === key &&
+                colorStreamType && element.colorStreamType === colorStreamType)
+            {
+                element.cancelled = true;
+                cancelled++;
+            }
+        });
+
+        return cancelled;
     }
 }
